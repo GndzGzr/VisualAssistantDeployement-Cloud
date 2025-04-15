@@ -12,14 +12,23 @@ jobs:
     uses: git-checkout@v1
     with:
       url: context.event.github.url
-  HelloWorld:
+  BuildAndDeploy:
     resources:
-      instance-type: C5
+      instance-type: P4000
     needs:
       - CloneRepo
     inputs:
       repo: CloneRepo.outputs.repo
-    uses: script@v1
+    uses: container@v1
     with:
-      script: python /inputs/repo/hello.py
-      image: tensorflow/tensorflow:1.14.0-py3
+      context: /inputs/repo
+      dockerfile: /inputs/repo/Dockerfile
+      build_args:
+        - key: CUDA_VISIBLE_DEVICES
+          value: 0
+      ports:
+        - 8000:8000
+      command: flask run --host=0.0.0.0 --port=8000
+      env:
+        - key: FLASK_APP
+          value: app.server:app
